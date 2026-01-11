@@ -4,10 +4,10 @@
 	键盘输入 5 个整数到数组a中，然后将 a 逆序复制到数组 b 中，并输出 b 中各元素的值
 */
 
-#define SIZE 5  // 定义数组大小
-
 int main()
 {
+	const int SIZE = 5;  // 定义数组大小
+
 	int a[SIZE], b[SIZE];  // 定义数组
 
 	int i = 0;  // 循环变量

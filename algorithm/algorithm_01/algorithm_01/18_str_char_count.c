@@ -3,12 +3,10 @@
 */
 #include <stdio.h>
 
-int main()
-{
-	
+int main(void)
+{	
 	char ch;
 	int alphabet = 0, space = 0, number = 0, other = 0;
-
 
 	// getchar() 读取后赋值给 ch, 然后 ch 判断是否等于 '\n'
 	while ((ch = getchar()) != '\n') {
