@@ -32,10 +32,10 @@ int main(void)
 
 int is_symmetry(const char *str)
 {
-	int len = strlen(str);  // 获取字符串长度
+	size_t len = strlen(str);  // 获取字符串长度
 
 	int left = 0;  // 左指针
-	int right = len - 1;  // 右指针
+	size_t right = len - 1;  // 右指针
 
 	while (left < right)
 	{

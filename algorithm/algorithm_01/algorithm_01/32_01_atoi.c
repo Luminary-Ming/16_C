@@ -1,10 +1,11 @@
 /*
-	实现 atoi() 函数, 字符串形式的数字转为整型数字
+	实现 myatoi() 函数, 字符串形式的数字转为整型数字
 */
 #include <stdio.h>
 #include <string.h>
 
-int atoi(const char *str);
+int myatoi1(const char *str);
+int myatoi2(const char *str);
 
 int main(void)
 {
@@ -16,12 +17,55 @@ int main(void)
 		fgets(str, sizeof(str), stdin);
 		str[strcspn(str, "\n")] = '\0';
 
-		printf("\"%s\" -> %d", str, atoi(str));
+		printf("\"%s\" -> %d", str, myatoi2(str));
 	}
 	return 0;
 }
 
-int atoi(const char *str)
+int myatoi2(const char *str)
+{
+	int i = 0;
+	int num = 0;
+	int flag = 1;  // 处理正负
+
+	while (str[i] == ' ') i++;  // 跳过空格
+
+	if (str[i] == '+' || str[i] == '-')
+	{
+		flag = str[i] == '-' ? -1 : 1;
+		i++;
+	}
+
+	while (str[i] != '\0')
+	{
+		switch (str[i])
+		{
+			case '0'...'9': 
+				num *= 10;
+				num += str[i] - '0';
+				break;
+			default:
+				return num * flag;
+		}
+		i++;
+	}
+	return num * flag;
+}
+/*
+	myatoi2 成功示例:
+	"123" -> 123
+	"abc" -> 0
+	"-123abc" -> -123
+	"---abc123" -> 0
+	"---123" -> 0
+	"000-123" -> 0
+	"+++0123" -> 0
+	"   -123" -> -123
+	"123   456" -> 123
+	"-123+456" -> -123
+*/
+
+int myatoi1(const char *str)
 {
 	int num = 0;  // 返回的数字
 
@@ -75,7 +119,7 @@ int atoi(const char *str)
 	return 0;
 }
 /*
-	成功示例:
+	myatoi1 成功示例:
 	"123" -> 123
 	"abc" -> 0
 	"123abc" -> 123

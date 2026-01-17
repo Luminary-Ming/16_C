@@ -1,11 +1,11 @@
 /*
-	实现 itoa() 函数, 整型数字转为字符串形式的数字
+	实现 myitoa() 函数, 整型数字转为字符串形式的数字
 */
 #include <stdio.h>
 #include <string.h>
 
 int calculate_digits(int num);  // 计算数字位数
-char *itoa(char *str, int num, int digits, int is_negative);
+char *myitoa(char *str, int num, int digits, int is_negative);
 
 
 int main(void)
@@ -25,7 +25,7 @@ int main(void)
 
 	char str[digits + 1];  // 加上一个尾零
 
-	printf("%d %d -> \"%s\" = \"%s\"", digits, num, itoa(str, num, digits, is_negative), str);
+	printf("%d %d -> \"%s\" = \"%s\"", digits, num, myitoa(str, num, digits, is_negative), str);
 
 	return 0;
 }
@@ -42,7 +42,7 @@ int calculate_digits(int num)
 	return digits;
 }
 
-char *itoa(char *str, int num, int digits, int is_negative)
+char *myitoa(char *str, int num, int digits, int is_negative)
 {
 	if (num == 0) str[0] = '0';
 		
