@@ -99,7 +99,7 @@ int llist_fetch(LLIST *handler, const void *find_data, void *save)
 	if (cur == NULL)
 		return -1;  // 没找到, 返回 -1
 
-	while (back->next != cur)  // 指针 back 到要删除节点的前一个位置
+	while (back->next != cur)  // 指针 back 到要取出节点的前一个位置
 		back = back->next;
 
 	back->next = cur->next;  // 把要取出的节点从链表中摘除
