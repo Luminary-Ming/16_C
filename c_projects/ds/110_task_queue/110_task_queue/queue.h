@@ -1,7 +1,6 @@
 /*
     任务队列的实现
 */
-
 #ifndef __QUEUE_H
 #define __QUEUE_H
 
@@ -59,6 +58,5 @@ int queue_de(queue_t *q, void *data);
 返回值 : 空
 */
 void queue_destroy(queue_t *q);
-
 
 #endif

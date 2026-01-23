@@ -96,4 +96,4 @@ int llist_fetch(LLIST *handler, const void *find_data, void *save)
 	free(cur);
 
 	return 0;
-}
+} 
