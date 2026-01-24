@@ -6,21 +6,9 @@
 
 typedef void (*llist_op)(const void *);  // 函数指针
 typedef int (*llist_cmp)(const void *, const void *);  // 函数指针
+typedef void LLIST;  // 把结构体类型换成 void 类型, 同时把结构体藏进 llist.c 中, 将来封装成库文件
 
-struct llist_node  // 数据节点结构
-{
-	struct llist_node *prev;  // 前驱指针
-	struct llist_node *next;  // 后继指针
-	char data[0];  // 标记数据域的首地址
-};
-
-typedef struct llist_head  // 头节点结构
-{
-	int size;  // 客户储存数据的指定大小
-	struct llist_node head;  // 头节点(不是指针)
-}LLIST;
-
-LLIST *llist_create(int);  // 在 C 中, 声明函数可以不写参数名, 只写参数类型
+LLIST *llist_create(int);
 
 int llist_insert(LLIST *, const void *, int);
 

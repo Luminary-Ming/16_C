@@ -22,7 +22,7 @@ typedef struct llist_head  // 头节点结构
 
 LLIST *llist_create(int);  // 在 C 中, 声明函数可以不写参数名, 只写参数类型
 
-LLIST llist_insert(LLIST *, const void *, int);
+int llist_insert(LLIST *, const void *, int);
 
 void llist_display(LLIST *, llist_op);
 

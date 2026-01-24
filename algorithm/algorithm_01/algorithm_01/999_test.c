@@ -1,15 +1,16 @@
-
 #include <stdio.h>
-#include <time.h>
+#include <string.h>
+
 
 int main(void)
 {
-	time_t current_time = time(NULL);  // 获取当前系统时间
-	struct tm *timeinfo = localtime(&current_time);
-	char date_str[20];
-	strftime(date_str, sizeof(date_str), "%Y-%m-%d", timeinfo);
-	printf("当前时间: %s\n", date_str);
-
+	char a[] = "hello\0world";
+	char b[15] = { 0 };
+	memcpy(b, a, 12);
+	printf("strlen(a) = %d\n", strlen(a));  // 5
+	printf("strlen(b) = %d\n", strlen(b));  // 5
+	printf("sizeof(a) = %d\n", sizeof(a));  // 12
+	printf("sizeof(b) = %d\n", sizeof(b));  // 15
 	return 0;
 }
 

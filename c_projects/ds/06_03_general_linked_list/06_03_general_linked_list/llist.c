@@ -3,6 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct llist_node  // 数据节点结构
+{
+	struct llist_node *prev;  // 前驱指针
+	struct llist_node *next;  // 后继指针
+	char data[0];  // 标记数据域的首地址
+};
+
+typedef struct llist_head  // 头节点结构
+{
+	int size;  // 客户储存数据的指定大小
+	struct llist_node head;  // 头节点(不是指针)
+}LLIST;
+
 LLIST *llist_create(int size)
 {
 	LLIST *handler = NULL;  // handler 指针指向头节点
@@ -21,24 +34,17 @@ int llist_insert(LLIST *handler, const void *data, int mode)
 {
 	struct llist_node *p = &handler->head;  // p 指针指向头节点中的 head 做操作
 	struct llist_node *newnode = NULL;  // newnode 指针指向新开辟的数据节点
-	newnode = malloc(sizeof(LLIST));
+	newnode = malloc(sizeof(LLIST) + handler->size);  // 开辟 LLIST 结构体大小 + 客户数据大小的空间
 	if (newnode == NULL)
 		return -1;
 
-	newnode->data = malloc(handler->size);  // 开辟数据域的大小
-	if (newnode->data == NULL)
-	{
-		free(newnode);  // newnode->data 开辟失败, 释放之前成功开辟的 newnode 空间
-		return -2;
-	}
-
-	memcpy(newnode->data, data, handler->size);  // 拷贝客户数据
+	memcpy(newnode->data, data, sizeof(struct llist_node) + handler->size);  // 拷贝客户数据
 
 	switch (mode)
 	{
 		case HEADINSERT: break;
-		case TAILINSERT:p = p->prev; break;
-		default:free(newnode->data); free(newnode); return -3;  // 插入失败, 释放空间
+		case TAILINSERT: p = p->prev; break;
+		default: free(newnode); return -3;  // 插入失败, 释放空间
 	}
 
 	newnode->next = p->next;
@@ -65,8 +71,7 @@ void llist_destroy(LLIST *handler)
 	{
 		cur->next->prev = cur->prev;  // 摘除当前节点
 		cur->prev->next = cur->next;
-		free(cur->data);  // 先释放数据域
-		free(cur);  // 再释放数据节点
+		free(cur);  // 释放数据节点
 		cur = handler->head.next;  // 每次释放头节点的下一个节点
 	}
 	free(handler);  // 释放头节点
@@ -99,11 +104,10 @@ int llist_delete(LLIST *handler, const void *find_data, llist_cmp cmp)
 	cur = _find(handler, find_data, cmp);  // 查找要删除的节点
 	if (cur == NULL)
 		return -1;
-	
+
 	cur->next->prev = cur->prev;
 	cur->prev->next = cur->next;
-	free(cur->data);  // 先释放数据域
-	free(cur);  // 再释放数据节点
+	free(cur);  // 释放数据节点
 
 	return 0;
 }
@@ -118,7 +122,6 @@ int llist_fetch(LLIST *handler, const void *find_data, llist_cmp cmp, void *save
 	cur->next->prev = cur->prev;
 	cur->prev->next = cur->next;
 	memcpy(save, cur->data, handler->size);  // 拷贝数据
-	free(cur->data);
 	free(cur);
 
 	return 0;

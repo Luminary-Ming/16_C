@@ -1,6 +1,6 @@
 /*
-	通用性强的链表 - 版本二
-	void *data 指针换成 char data[0] 数组省头节点的字节空间
+	通用性强的链表 - 版本三
+	把结构体类型换成 void 类型, 同时把结构体藏进 llist.c 中, 将来封装成库文件
 */
 #include <stdio.h>
 #include <stdlib.h>

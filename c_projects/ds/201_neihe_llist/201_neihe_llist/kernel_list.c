@@ -54,7 +54,7 @@ int main(void)
 	else
 		printf("\nFind It! %d  %s  %d\n", find->id, find->name, find->math);
 
-#elif 0
+#elif 1
 	// 4. 删除节点
 	int ret = llits_delete(handler, &find_id);
 	if (ret != 0)
@@ -63,8 +63,8 @@ int main(void)
 		printf("Delete It!\n");
 
 
-#else
-#endif
+#elif 0
+
 	// 5. 取出节点
 	STU save;  // 存储取出的数据节点
 	int ret = llist_fetch(handler, &find_id, &save);
@@ -72,8 +72,10 @@ int main(void)
 		printf("Fetch It Is Failed!\n");
 	else
 		printf("Fetch It!\n%d  %s  %d\n", save.id, save.name, save.math);
+#endif
 
 	printf("\n=========================================\n");
+
 
 	// 6. 销毁节点
 	llist_destroy(handler);
