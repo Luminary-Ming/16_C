@@ -43,7 +43,7 @@ int queue_init(queue_t **q, int capacity, int size)
 */
 int queue_is_empty(const queue_t *q)
 {
-    return ((q->rear + 1) % q->capacity) == q->front;
+    return q->rear == q->front;
 }
 
 /*
@@ -53,7 +53,7 @@ int queue_is_empty(const queue_t *q)
 */
 int queue_is_full(const queue_t *q)
 {
-
+    return ((q->rear + 1) % q->capacity) == q->front;
 }
 
 /*
@@ -64,16 +64,32 @@ int queue_is_full(const queue_t *q)
 */
 int queue_en(queue_t *q, const void *data)
 {
+    if (queue_is_full(q))
+        return -1;
+
+    q->rear = (q->rear + 1) % q->capacity;  // 移动队尾标记
+    memcpy((char *)q->s + q->rear * q->size, data, q->size);  // 入队数据
+    // q->s 强转为 char * 就能1字节偏移
+    // q->rear * q->size 队尾标记 * 一个空间的大小 = 要访问的元素在内存中的字节偏移量
+    // (char *)q->s + q->rear * q->size  将基地址加上偏移量，得到目标元素的内存地址
+
+    return 0;
 }
 
 /*
 功能 : 出队
 参数 : q 指向要出队的队列
-        data 指向存储空间(存储出队的数据)
+       save 指向存储空间(存储出队的数据)
 返回值 : 成功返回0,失败返回<0
 */
-int queue_de(queue_t *q, void *data)
+int queue_de(queue_t *q, void *save)
 {
+    if (queue_is_empty(q))
+        return -1;
+    q->front = (q->front + 1) % q->capacity;
+    memcpy(save, (char *)q->s + q->front * q->size, q->size);
+    memset((char *)q->s + q->front * q->size, '\0', q->size);  // 清空脏数据(清空出队数据)
+    return 0;
 }
 
 /*
@@ -83,4 +99,6 @@ int queue_de(queue_t *q, void *data)
 */
 void queue_destroy(queue_t *q)
 {
+    free(q->s);  // 先释放队列空间
+    free(q);  // 再释放队列结构体空间
 }

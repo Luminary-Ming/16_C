@@ -6,8 +6,9 @@ STACK *stack_create(void)
 	STACK *s = NULL;
 	s = malloc(sizeof(STACK));  // 开辟栈式存储结构
 	if (s == NULL)
-		return;
+		return NULL;
 	s->stack_ind = 0;  // 初始化栈顶元素
+	return s;
 }
 
 int is_full(STACK * s)

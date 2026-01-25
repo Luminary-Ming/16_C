@@ -47,10 +47,10 @@ int queue_en(queue_t *q, const void *data);
 /*
 功能 : 出队
 参数 : q 指向要出队的队列
-        data 指向存储空间(存储出队的数据)
+       save 指向存储空间(存储出队的数据)
 返回值 : 成功返回0,失败返回<0
 */
-int queue_de(queue_t *q, void *data);
+int queue_de(queue_t *q, void *save);
 
 /*
 功能 : 释放队列
