@@ -46,6 +46,7 @@ void llist_display(LLIST *handler)
 
 void llist_destroy(LLIST *handler)
 {
+
 	LLIST *cur = NULL;  // cur 指针指向要释放的节点
 	for (cur = handler->next; cur != handler; cur = handler->next)
 	{

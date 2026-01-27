@@ -25,7 +25,7 @@ int llist_insert(LLIST *handler, const void *data, int mode)
 	if (newnode == NULL)
 		return -1;
 
-	memcpy(newnode->data, data, sizeof(struct llist_node) + handler->size);  // 拷贝客户数据
+	memcpy(newnode->data, data, handler->size);  // 拷贝客户数据
 
 	switch (mode)
 	{

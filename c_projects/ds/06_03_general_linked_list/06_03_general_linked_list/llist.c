@@ -14,12 +14,12 @@ typedef struct llist_head  // 头节点结构
 {
 	int size;  // 客户储存数据的指定大小
 	struct llist_node head;  // 头节点(不是指针)
-}LLIST;
+};
 
 LLIST *llist_create(int size)
 {
-	LLIST *handler = NULL;  // handler 指针指向头节点
-	handler = malloc(sizeof(LLIST));  // 开辟头节点空间
+	struct llist_head *handler = NULL;  // handler 指针指向头节点
+	handler = malloc(sizeof(struct llist_head));  // 开辟头节点空间
 	if (handler == NULL)
 		return NULL;  // 开辟失败, 返回 NULL
 
@@ -32,14 +32,15 @@ LLIST *llist_create(int size)
 
 int llist_insert(LLIST *handler, const void *data, int mode)
 {
-	struct llist_node *p = &handler->head;  // p 指针指向头节点中的 head 做操作
 	struct llist_node *newnode = NULL;  // newnode 指针指向新开辟的数据节点
-	newnode = malloc(sizeof(LLIST) + handler->size);  // 开辟 LLIST 结构体大小 + 客户数据大小的空间
+	struct llist_head *h = handler;  // void * 转换成 struct llist_head * 
+	newnode = malloc(sizeof(struct llist_node) + h->size);  // 开辟 LLIST 结构体大小 + 客户数据大小的空间
 	if (newnode == NULL)
 		return -1;
 
-	memcpy(newnode->data, data, sizeof(struct llist_node) + handler->size);  // 拷贝客户数据
+	memcpy(newnode->data, data, h->size);  // 拷贝客户数据
 
+	struct llist_node *p = &h->head;  // p 指针指向头节点中的 head 做操作
 	switch (mode)
 	{
 		case HEADINSERT: break;
@@ -57,31 +58,32 @@ int llist_insert(LLIST *handler, const void *data, int mode)
 
 void llist_display(LLIST *handler, llist_op op)
 {
+	struct llist_head *h = handler;
 	struct llist_node *cur = NULL;  // cur 指针指向每一个数据节点
-
-	for (cur = handler->head.next; cur != &handler->head; cur = cur->next)
+	for (cur = h->head.next; cur != &h->head; cur = cur->next)
 		op(cur->data);  // 使用客户给的函数进行打印输出
 }
 
 void llist_destroy(LLIST *handler)
 {
-	struct llist_node *cur = handler->head.next;  // cur 指针指向每一个数据节点
+	struct llist_head *h = handler;
+	struct llist_node *cur = h->head.next;  // cur 指针指向每一个数据节点
 
-	while (cur != &handler->head)
+	while (cur != &h->head)
 	{
 		cur->next->prev = cur->prev;  // 摘除当前节点
 		cur->prev->next = cur->next;
 		free(cur);  // 释放数据节点
-		cur = handler->head.next;  // 每次释放头节点的下一个节点
+		cur = h->head.next;  // 每次释放头节点的下一个节点
 	}
-	free(handler);  // 释放头节点
+	free(h);  // 释放头节点
 }
 
 static struct llist_node *_find(LLIST *handler, const void *find_data, llist_cmp cmp)
 {
+	struct llist_head *h = handler;
 	struct llist_node *cur = NULL;
-
-	for (cur = handler->head.next; cur != &handler->head; cur = cur->next)
+	for (cur = h->head.next; cur != &h->head; cur = cur->next)
 	{
 		if (cmp(cur->data, find_data))
 			return cur;  // 返回找到的数据节点地址
@@ -114,6 +116,7 @@ int llist_delete(LLIST *handler, const void *find_data, llist_cmp cmp)
 
 int llist_fetch(LLIST *handler, const void *find_data, llist_cmp cmp, void *save)
 {
+	struct llist_head *h = handler;
 	struct llist_node *cur = NULL;
 	cur = _find(handler, find_data, cmp);
 	if (cur == NULL)
@@ -121,7 +124,7 @@ int llist_fetch(LLIST *handler, const void *find_data, llist_cmp cmp, void *save
 
 	cur->next->prev = cur->prev;
 	cur->prev->next = cur->next;
-	memcpy(save, cur->data, handler->size);  // 拷贝数据
+	memcpy(save, cur->data, h->size);  // 拷贝数据
 	free(cur);
 
 	return 0;
