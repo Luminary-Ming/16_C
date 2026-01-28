@@ -72,8 +72,8 @@ static struct llist_node *_find(LLIST *handler, const void *find_data, llist_cmp
 	{
 		if (cmp(cur->data, find_data))
 			return cur;  // 返回找到的数据节点地址
-		return NULL;
 	}
+	return NULL;
 }
 
 void *llist_find(LLIST *handler, const void *find_data, llist_cmp cmp)
