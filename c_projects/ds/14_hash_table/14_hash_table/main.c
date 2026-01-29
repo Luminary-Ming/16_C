@@ -93,6 +93,7 @@ int main(void)
 
 	int find_id = 102;
 	char *find_name = "stu8";
+	int find_tel= 10088;
 #if 0
 	struct stu *find = htable_find(ht, &find_id, id_hash, id_cmp);
 	if(!find)
@@ -111,7 +112,7 @@ int main(void)
 
 #elif 1
 	struct stu save;
-	int ret = htable_fetch(ht, &find_id, id_hash, id_cmp, &save);
+	int ret = htable_fetch(ht, &find_tel, id_hash, tel_cmp, &save, &find_id);
 	if (ret != 0)
 		printf("Fetch It Is Failed!");
 	else

@@ -72,6 +72,7 @@ void contact_print(Contact *contact)
 	printf("Telephone: %s\n", contact->telephone);
 	printf("Email: %s\n", contact->email);
 	printf("Initial: %c\n", contact->initial);
+	printf("Image: %s\n", contact->image);
 	printf("Deleted: %d\n", contact->del);
 	printf("--------------------------------\n");
 }

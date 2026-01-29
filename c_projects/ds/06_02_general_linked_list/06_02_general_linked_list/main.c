@@ -74,7 +74,7 @@ int main(void)
 	llist_display(handler, print);
 
 	printf("------------------------------------\n");
-
+	/*
 	find = llist_find(handler, &find_tel, tel_cmp);
 	if (find == NULL)
 		printf("Not Find It!\n");
@@ -89,8 +89,8 @@ int main(void)
 		printf("Delete It Is Failed!\n");
 	else
 		printf("Delete It!\n");
-
-	ret = llist_fetch(handler, &find_tel, tel_cmp, &save);
+	*/
+	int ret = llist_fetch(handler, &find_tel, tel_cmp, &save);
 	if (ret != 0)
 		printf("Fetch It Is Failed!\n");
 	else

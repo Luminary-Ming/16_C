@@ -7,7 +7,6 @@
 #include "contact.h"
 
 typedef void (*llist_contact_print)(const void *);  // 函数指针
-//typedef char(*llist_get_initial)(const void *);  // 函数指针
 
 struct llist_node  // 数据节点结构体
 {
@@ -27,6 +26,7 @@ LLIST *llist_create(int);  // 创建链表
 int llist_insert(LLIST *, Contact *, int );  // 新增节点
 void llist_display(LLIST *,llist_contact_print);  // 遍历链表
 void llist_destroy(LLIST *);  // 销毁链表
+void llist_clear(LLIST *);  // 清空链表
 int llist_delete(LLIST *, int);  // 根据 id 删除节点
 Contact *llist_find(LLIST *, int);  // 根据 id 查找节点
 int llist_get_count(LLIST *);  // 获取节点数量

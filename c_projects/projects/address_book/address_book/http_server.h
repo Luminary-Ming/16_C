@@ -6,13 +6,10 @@
 // HTTP服务器结构
 typedef struct
 {
-    struct MHD_Daemon *daemon;
-    int port;
-    int running;
+    struct MHD_Daemon *daemon;  // HTTP 服务器实例, 创建后服务器自动开始监听端口
+    int port;  // 端口
+    int running;  // 运行状态
 } HttpServer;
-
-// 全局链表（用于存储联系人）
-extern void *global_contact_list;
 
 // 服务器控制函数
 int http_server_start(int port);

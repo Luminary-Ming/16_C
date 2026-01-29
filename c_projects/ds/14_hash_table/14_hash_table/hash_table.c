@@ -148,23 +148,28 @@ void htable_destroy(HTABLE *handler)
 	struct htable_head *h = handler;  // 转换指针
 
 	for (int i = 0; i < h->capacity; i++)  // 循环销毁哈希表桶中每条链表
+	{
 		llist_destroy(h->bucket[i]);
+		h->bucket[i] = NULL;
+	}	
 	free(h->bucket);  // 释放哈希表桶
+	h->bucket = NULL;
 	free(h);  // 释放哈希表结构
+	h = NULL;
 }
 
-static int _find(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp)
+static int _find(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp, void *id)
 {
 	if (!handler || !find_data || !hash || !cmp)  // 判断参数是否合理
 		return -1;  // 由于参数不合理, 结束函数, 返回 -1
 
 	struct htable_head *h = handler;  // 转换指针
 
-	unsigned int idx = hash(find_data, h->capacity);  // 使用客户指定的哈希函数计算索引值
+	unsigned int idx = hash(id, h->capacity);  // 使用客户指定的哈希函数计算索引值
 
 	return idx;
 }
-
+#if 0
 void *htable_find(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp)
 {
 	int idx = _find(handler, find_data, hash, cmp);
@@ -186,11 +191,12 @@ int htable_delete(HTABLE *handler, const void *find_data, htable_hash hash, htab
 
 	return llist_delete(h->bucket[idx], find_data, cmp);
 }
+#else
+#endif
 
-
-int htable_fetch(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp, void *save)
+int htable_fetch(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp, void *save, void*id)
 {
-	int idx = _find(handler, find_data, hash, cmp);
+	int idx = _find(handler, find_data, hash, cmp, id);
 	if (idx < 0)
 		return -1;
 

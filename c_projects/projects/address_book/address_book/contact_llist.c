@@ -62,7 +62,7 @@ void llist_display(LLIST *handler, llist_contact_print contact_print)
         Contact *contact = (Contact *)cur->contact;
         if (contact->del == 0)  // 只显示未删除的联系人
         {
-            print(contact);
+            contact_print(contact);
         }
         cur = cur->next;
     }
@@ -117,11 +117,30 @@ void llist_destroy(LLIST *handler)
     struct llist_node *cur = handler->head.next;   // cur 指针指向每一个数据节点
     while (cur != &handler->head)
     {
-        struct llist_node *next = cur->next;
+        cur->next->prev = cur->prev;
+        cur->prev->next = cur->next;
         free(cur);  // 释放数据节点
-        cur = next;
+        cur = handler->head.next;
     }
     free(handler);  // 释放头节点
+}
+
+void llist_clear(LLIST *handler)
+{
+    if (!handler)
+        return;
+    struct llist_node *cur = handler->head.next;
+    while (cur != &handler->head)
+    {
+        cur->next->prev = cur->prev;
+        cur->prev->next = cur->next;
+        free(cur);  // 释放数据节点
+        cur = handler->head.next;
+    }
+
+    handler->head.prev = &handler->head;
+    handler->head.next = &handler->head;
+    handler->count = 0;
 }
 
 int llist_delete(LLIST *handler, int id)

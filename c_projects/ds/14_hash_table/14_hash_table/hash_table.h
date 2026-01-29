@@ -70,6 +70,6 @@ int htable_delete(HTABLE *handler, const void *find_data, htable_hash hash, htab
 		  save      存储取出的数据
   返回值: 成功返回 0, 失败返回 -1
 */
-int htable_fetch(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp, void *save);
+int htable_fetch(HTABLE *handler, const void *find_data, htable_hash hash, htable_cmp cmp, void *save, void *id);
 
 #endif

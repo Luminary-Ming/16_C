@@ -7,12 +7,24 @@
 #include "db_mysql.h"
 #include "utils.h"
 #include "contact.h"
+#include "minio_server.h"
+
+#include <time.h>        // 用于 time() 函数
+#include <sys/time.h>    // 用于 gettimeofday() 函数
+#include <stdint.h>      // 用于 uint32_t 类型
 
 // 全局链表
 void *global_contact_list = NULL;
 
 // HTTP服务器实例
 static HttpServer server = { 0 };
+
+
+static int handle_upload_base64_image(struct MHD_Connection *connection,
+    const char *json_data,
+    size_t data_size,
+    void **con_cls);
+
 
 // 发送JSON响应
 static int send_json_response(struct MHD_Connection *connection,
@@ -30,8 +42,13 @@ static int send_json_response(struct MHD_Connection *connection,
 
     MHD_add_response_header(response, "Content-Type", "application/json");
     MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-    MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers", "*");
+
+    //MHD_add_response_header(response, "Content-Type", "application/json");
+    //MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+    //MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    //MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
 
     ret = MHD_queue_response(connection, status_code, response);
     MHD_destroy_response(response);
@@ -48,9 +65,14 @@ static int handle_options(struct MHD_Connection *connection)
     response = MHD_create_response_from_buffer(0, NULL, MHD_RESPMEM_PERSISTENT);
 
     MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers", "*");
+    MHD_add_response_header(response, "Access-Control-Max-Age", "86400");
+
+ /*   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
     MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-    MHD_add_response_header(response, "Access-Control-Max-Age", "86400");
+    MHD_add_response_header(response, "Access-Control-Max-Age", "86400");*/
 
     ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
     MHD_destroy_response(response);
@@ -158,7 +180,11 @@ static int handle_get_contact(struct MHD_Connection *connection, int id)
     char *contact_json = contact_to_json(contact);
     if (!contact_json)
     {
-        free(contact);
+        if (contact)
+        {
+            free(contact);
+            contact = NULL;
+        }
         json_response_init(&resp, ERROR_SYSTEM, "Failed to generate JSON");
         char *json = json_response_to_string(&resp);
         int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
@@ -172,9 +198,8 @@ static int handle_get_contact(struct MHD_Connection *connection, int id)
 
     int ret = send_json_response(connection, MHD_HTTP_OK, json);
 
-    free(contact_json);
-    free(json);
-    free(contact);
+    if (contact_json) free(contact_json);
+    if (json) free(json);
 
     return ret;
 }
@@ -230,6 +255,22 @@ static Contact *parse_contact_from_json(const char *json_str)
             contact->email[len] = '\0';
         }
     }
+
+    // 添加对 image 字段的解析
+    const char *image_start = strstr(json_str, "\"image\":\"");
+    if (image_start)
+    {
+        image_start += 9;
+        const char *image_end = strchr(image_start, '"');
+        if (image_end)
+        {
+            int len = image_end - image_start;
+            if (len > IMAGESIZE - 1) len = IMAGESIZE - 1;
+            strncpy(contact->image, image_start, len);
+            contact->image[len] = '\0';
+        }
+    }
+
 
     const char *id_start = strstr(json_str, "\"id\":");
     if (id_start)
@@ -411,6 +452,190 @@ static int parse_id_from_url(const char *url)
     return atoi(id_str);
 }
 
+
+
+
+// 处理图片上传
+// 处理Base64图片上传
+static int handle_upload_base64_image(struct MHD_Connection *connection,
+    const char *json_data,
+    size_t data_size,
+    void **con_cls)
+{
+    printf("=== Base64上传处理 ===\n");
+
+    JsonResponse resp;
+
+    // 解析JSON
+    char *json_str = malloc(data_size + 1);
+    if (!json_str)
+    {
+        json_response_init(&resp, ERROR_SYSTEM, "内存分配失败");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
+        free(json);
+        return ret;
+    }
+
+    memcpy(json_str, json_data, data_size);
+    json_str[data_size] = '\0';
+
+    printf("收到JSON数据: %s\n", json_str);
+
+    // 简单解析JSON（实际应该用cJSON库）
+    char *filename = NULL;
+    char *base64_data = NULL;
+
+    // 解析filename
+    char *filename_start = strstr(json_str, "\"filename\":\"");
+    if (filename_start)
+    {
+        filename_start += 12; // 跳过 "\"filename\":\""
+        char *filename_end = strchr(filename_start, '"');
+        if (filename_end)
+        {
+            int len = filename_end - filename_start;
+            filename = malloc(len + 1);
+            if (filename)
+            {
+                strncpy(filename, filename_start, len);
+                filename[len] = '\0';
+                printf("文件名: %s\n", filename);
+            }
+        }
+    }
+
+    // 解析data（Base64）
+    char *data_start = strstr(json_str, "\"data\":\"");
+    if (data_start)
+    {
+        data_start += 8; // 跳过 "\"data\":\""
+        char *data_end = strstr(data_start, "\"");
+        if (data_end)
+        {
+            int len = data_end - data_start;
+            base64_data = malloc(len + 1);
+            if (base64_data)
+            {
+                strncpy(base64_data, data_start, len);
+                base64_data[len] = '\0';
+                printf("Base64数据长度: %d\n", len);
+            }
+        }
+    }
+
+    if (!filename || !base64_data)
+    {
+        free(json_str);
+        free(filename);
+        free(base64_data);
+        json_response_init(&resp, ERROR_INVALID_INPUT, "无效的JSON数据");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_BAD_REQUEST, json);
+        free(json);
+        return ret;
+    }
+
+    // Base64解码
+    size_t decoded_size = 0;
+    unsigned char *decoded_data = base64_decode(base64_data, &decoded_size);
+
+    if (!decoded_data)
+    {
+        free(json_str);
+        free(filename);
+        free(base64_data);
+        json_response_init(&resp, ERROR_SYSTEM, "Base64解码失败");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
+        free(json);
+        return ret;
+    }
+
+    printf("解码后大小: %zu\n", decoded_size);
+
+    // 保存临时文件
+    char temp_path[512];
+    snprintf(temp_path, sizeof(temp_path), "/tmp/%s", filename);
+
+    FILE *fp = fopen(temp_path, "wb");
+    if (!fp)
+    {
+        free(json_str);
+        free(filename);
+        free(base64_data);
+        free(decoded_data);
+        json_response_init(&resp, ERROR_SYSTEM, "无法创建临时文件");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
+        free(json);
+        return ret;
+    }
+
+    fwrite(decoded_data, 1, decoded_size, fp);
+    fclose(fp);
+    printf("临时文件保存: %s\n", temp_path);
+
+    // 上传到MinIO
+    MinioConfig *minio_config = minio_create();
+    if (!minio_config)
+    {
+        remove(temp_path);
+        free(json_str);
+        free(filename);
+        free(base64_data);
+        free(decoded_data);
+        json_response_init(&resp, ERROR_SYSTEM, "MinIO初始化失败");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
+        free(json);
+        return ret;
+    }
+
+    int upload_result = minio_upload(minio_config, filename, temp_path);
+    remove(temp_path);
+
+    if (upload_result != 0)
+    {
+        minio_destroy(minio_config);
+        free(json_str);
+        free(filename);
+        free(base64_data);
+        free(decoded_data);
+        json_response_init(&resp, ERROR_SYSTEM, "上传到MinIO失败");
+        char *json = json_response_to_string(&resp);
+        int ret = send_json_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, json);
+        free(json);
+        return ret;
+    }
+
+    // 生成URL
+    char *image_url = minio_preview_url(minio_config, filename);
+    minio_destroy(minio_config);
+
+    // 构建响应
+    char response_json[1024];
+    snprintf(response_json, sizeof(response_json),
+        "{\"url\": \"%s\", \"filename\": \"%s\"}",
+        image_url ? image_url : "", filename);
+
+    json_response_init(&resp, SUCCESS, "上传成功");
+    json_response_set_data(&resp, response_json);
+    char *json = json_response_to_string(&resp);
+
+    int ret = send_json_response(connection, MHD_HTTP_OK, json);
+
+    // 清理
+    free(json_str);
+    free(filename);
+    free(base64_data);
+    free(decoded_data);
+    free(image_url);
+    free(json);
+
+    return ret;
+}
+
 // 主请求处理函数
 int handle_request(void *cls, struct MHD_Connection *connection,
     const char *url, const char *method,
@@ -424,6 +649,56 @@ int handle_request(void *cls, struct MHD_Connection *connection,
     }
 
     // 检查URL路径
+    if (strcmp(url, "/api/contacts/upload") == 0)
+    {
+        if (strcmp(method, "POST") == 0)
+        {
+            // 检查Content-Type
+            const char *content_type = MHD_lookup_connection_value(connection,
+                MHD_HEADER_KIND, "Content-Type");
+
+            if (content_type && strstr(content_type, "application/json"))
+            {
+                // Base64 JSON上传
+                static char json_data[10 * 1024 * 1024]; // 100MB
+                if (*con_cls == NULL)
+                {
+                    *con_cls = json_data;
+                    json_data[0] = '\0';
+                    return MHD_YES;
+                }
+                else if (*upload_data_size)
+                {
+                    strncat(json_data, upload_data, *upload_data_size);
+                    *upload_data_size = 0;
+                    return MHD_YES;
+                }
+                else
+                {
+                    return handle_upload_base64_image(connection, json_data, strlen(json_data), con_cls);
+                }
+            }
+            else
+            {
+                // 不再支持multipart/form-data上传
+                JsonResponse resp;
+                json_response_init(&resp, ERROR_INVALID_INPUT, "只支持application/json格式上传");
+                char *json = json_response_to_string(&resp);
+                int ret = send_json_response(connection, MHD_HTTP_BAD_REQUEST, json);
+                free(json);
+                return ret;
+            }
+        }
+        else
+        {
+            JsonResponse resp;
+            json_response_init(&resp, ERROR_SYSTEM, "Method not allowed");
+            char *json = json_response_to_string(&resp);
+            int ret = send_json_response(connection, MHD_HTTP_METHOD_NOT_ALLOWED, json);
+            free(json);
+            return ret;
+        }
+    }
     if (strcmp(url, "/api/contacts") == 0)
     {
         if (strcmp(method, "GET") == 0)
@@ -500,6 +775,8 @@ int handle_request(void *cls, struct MHD_Connection *connection,
     return ret;
 }
 
+
+
 // 启动HTTP服务器
 int http_server_start(int port)
 {
@@ -516,6 +793,9 @@ int http_server_start(int port)
         printf("Failed to create contact list\n");
         return 0;
     }
+
+    // MinIO 初始化
+    minio_init();
 
     // 初始化数据库
     if (!db_init())
@@ -541,9 +821,9 @@ int http_server_start(int port)
     if (!server.daemon)
     {
         printf("Failed to start HTTP server on port %d\n", port);
-        db_close();
-        llist_destroy((LLIST *)global_contact_list);
-        global_contact_list = NULL;
+        db_close();  // 关闭数据库连接
+        llist_destroy((LLIST *)global_contact_list);  // 销毁链表
+        global_contact_list = NULL;  // 防止野指针
         return 0;
     }
 
@@ -557,6 +837,7 @@ int http_server_start(int port)
     printf("  POST   /api/contacts          - Add new contact\n");
     printf("  PUT    /api/contacts          - Update contact\n");
     printf("  DELETE /api/contacts/{id}     - Delete contact by ID\n");
+    printf("  POST   /api/contacts/upload   - Upload image file\n");
 
     return 1;
 }
@@ -574,6 +855,9 @@ void http_server_stop()
 
     // 关闭数据库连接
     db_close();
+
+    // MinIO 清理
+    minio_cleanup();
 
     // 销毁链表
     if (global_contact_list)

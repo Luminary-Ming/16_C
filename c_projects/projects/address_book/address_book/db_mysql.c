@@ -5,7 +5,6 @@
 #include <mysql/mysql.h>
 #include "contact_llist.h"
 #include "contact.h"
-//#include <ctype.h>
 
 MYSQL *db_conn = NULL;  // 数据库连接池
 
@@ -70,7 +69,7 @@ int db_load_contacts(LLIST *handler)
 {
     if (!db_conn || !handler)
         return 0;
-    const char *query = "select id,name,telephone,email,initial,del from contacts where del = 0";
+    const char *query = "select id,name,telephone,email,initial,image,del from contacts where del = 0";
 
     if (mysql_query(db_conn, query))
     {
@@ -88,17 +87,8 @@ int db_load_contacts(LLIST *handler)
     MYSQL_ROW row;
     int count = 0;
 
-    // 清空链表
-    struct llist_node *cur = handler->head.next;
-    while (cur != &handler->head)
-    {
-        struct llist_node *next = cur->next;  // 修复：先保存下一个节点
-        free(cur);  // 释放数据节点
-        cur = next;
-    }
-    handler->head.next = &handler->head;
-    handler->head.prev = &handler->head;
-    handler->count = 0;
+    // 每次查询清空链表
+    llist_clear(handler);
 
     while ((row = mysql_fetch_row(result)))
     {
@@ -110,14 +100,18 @@ int db_load_contacts(LLIST *handler)
         contact.name[NAMESIZE - 1] = '\0';
 
         strncpy(contact.telephone, row[2] ? row[2] : "", TELEPHONESIZE - 1);
-        contact.telephone[TELEPHONESIZE - 1] = '\0';  // 修复：应该是telephone
+        contact.telephone[TELEPHONESIZE - 1] = '\0';
 
         strncpy(contact.email, row[3] ? row[3] : "", EMAILSIZE - 1);
-        contact.email[EMAILSIZE - 1] = '\0';  // 修复：应该是email
+        contact.email[EMAILSIZE - 1] = '\0';
 
         contact.initial = row[4] ? row[4][0] : '#';
 
-        contact.del = row[5] ? atoi(row[5]) : 0;
+        
+        strncpy(contact.image, row[5] ? row[5] : "", IMAGESIZE - 1);
+        contact.image[IMAGESIZE - 1] = '\0';
+
+        contact.del = row[6] ? atoi(row[6]) : 0;
 
         llist_insert(handler, &contact, TAILINSERT);
         count++;
@@ -137,9 +131,9 @@ int db_add_contact(Contact *contact)
     contact->initial = get_initial(contact->name);
 
     snprintf(query, sizeof(query),
-        "insert into contacts (name, telephone, email, initial, del) "
-        "values ('%s', '%s', '%s', '%c', '%d')",
-        contact->name, contact->telephone, contact->email, contact->initial, contact->del);
+        "insert into contacts (name, telephone, email, initial, image, del) "
+        "values ('%s', '%s', '%s', '%c', '%s', '%d')",
+        contact->name, contact->telephone, contact->email, contact->initial, contact->image, contact->del);
 
     if (mysql_query(db_conn, query))
     {
@@ -147,7 +141,7 @@ int db_add_contact(Contact *contact)
         return 0;
     }
 
-    contact->id = (int)mysql_insert_id(db_conn);
+    contact->id = (int)mysql_insert_id(db_conn);  // 获取插入成功的 ID
     contact->del = 0;
 
     printf("添加联系人成功，ID: %d\n", contact->id);
@@ -164,9 +158,9 @@ int db_update_contact(Contact *contact)
     contact->initial = get_initial(contact->name);
 
     snprintf(query, sizeof(query),
-        "UPDATE contacts SET name='%s', telephone='%s', email='%s', initial='%c' "
+        "UPDATE contacts SET name='%s', telephone='%s', email='%s', initial='%c', image='%s' "
         "WHERE id=%d AND del=0",
-        contact->name, contact->telephone, contact->email, contact->initial, contact->id);
+        contact->name, contact->telephone, contact->email, contact->initial, contact->image, contact->id);
 
     if (mysql_query(db_conn, query))
     {
@@ -248,7 +242,7 @@ Contact *db_find_contact(int id)
 
     char query[256];
     snprintf(query, sizeof(query),
-        "SELECT id, name, telephone, email, initial, del FROM contacts WHERE id=%d AND del=0", id);
+        "SELECT id, name, telephone, email, initial, image, del FROM contacts WHERE id=%d AND del=0", id);
 
     if (mysql_query(db_conn, query))
     {
@@ -307,7 +301,18 @@ Contact *db_find_contact(int id)
     }
 
     contact->initial = row[4] ? row[4][0] : '#';
-    contact->del = row[5] ? atoi(row[5]) : 0;
+
+    if (row[5])
+    {
+        strncpy(contact->image, row[5], IMAGESIZE - 1);
+        contact->image[IMAGESIZE - 1] = '\0';
+    }
+    else
+    {
+        contact->image[0] = '\0';
+    }
+
+    contact->del = row[6] ? atoi(row[6]) : 0;
 
     mysql_free_result(result);
     return contact;

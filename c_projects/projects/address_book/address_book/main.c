@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
     printf("=== 通讯录后端接口 Api ===\n");
 
-    // 启动HTTP服务器（默认端口8080）
+    // 启动 HTTP 服务器（默认端口8080）
     int port = 8080;
     if (argc > 1)
     {
