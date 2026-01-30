@@ -1,4 +1,5 @@
 #include "minio_server.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,9 +74,11 @@ int minio_upload(MinioConfig *config, const char *object_name, const char *local
         return -2;
     }
 
+    char *new_name = handle_filename(object_name);
+
     // 构建URL
     char url[1024];
-    snprintf(url, sizeof(url), "http://%s:%d/%s/%s", config->endpoint, config->port, config->bucket, object_name);
+    snprintf(url, sizeof(url), "http://%s:%d/%s/%s", config->endpoint, config->port, config->bucket, new_name);
 
     // 设置curl选项
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -120,7 +123,9 @@ char *minio_preview_url(MinioConfig *config, const char *object_name)
     char *url = malloc(1024);
     if (!url) return NULL;
 
-    snprintf(url, 1024, "http://%s:%d/%s/%s", config->endpoint, config->port, config->bucket, object_name);
+    char *new_name = handle_filename(object_name);
+
+    snprintf(url, 1024, "http://%s:%d/%s/%s", config->endpoint, config->port, config->bucket, new_name);
 
     return url;
 }

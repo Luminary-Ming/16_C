@@ -19,13 +19,6 @@ void *global_contact_list = NULL;
 // HTTP服务器实例
 static HttpServer server = { 0 };
 
-
-static int handle_upload_base64_image(struct MHD_Connection *connection,
-    const char *json_data,
-    size_t data_size,
-    void **con_cls);
-
-
 // 发送JSON响应
 static int send_json_response(struct MHD_Connection *connection,
     int status_code, const char *json)
@@ -453,9 +446,6 @@ static int parse_id_from_url(const char *url)
 }
 
 
-
-
-// 处理图片上传
 // 处理Base64图片上传
 static int handle_upload_base64_image(struct MHD_Connection *connection,
     const char *json_data,
@@ -480,7 +470,7 @@ static int handle_upload_base64_image(struct MHD_Connection *connection,
     memcpy(json_str, json_data, data_size);
     json_str[data_size] = '\0';
 
-    printf("收到JSON数据: %s\n", json_str);
+    //printf("收到JSON数据: %s\n", json_str); // 打印 json
 
     // 简单解析JSON（实际应该用cJSON库）
     char *filename = NULL;
@@ -774,7 +764,6 @@ int handle_request(void *cls, struct MHD_Connection *connection,
 
     return ret;
 }
-
 
 
 // 启动HTTP服务器

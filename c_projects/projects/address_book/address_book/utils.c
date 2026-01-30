@@ -108,8 +108,8 @@ char *contacts_to_json(Contact **contacts, int count)
     return json;
 }
 
-// 上传文件
-char *upload_image(const char *object_name)
+// 处理文件名
+char *handle_filename(const char *object_name)
 {
     if (!object_name || strlen(object_name) == 0)
         return  NULL;
@@ -128,32 +128,11 @@ char *upload_image(const char *object_name)
     strncpy(prefix, object_name, len);
     prefix[len] = '\0';
 
-    char new_name[256] = { 0 };  // 存储新名字
+    char *new_name = malloc(256);  // 存储新名字
+    if (!new_name) return NULL;
     snprintf(new_name, 256, "%s_%ld.%s", prefix, timestamp, dot + 1);
 
-    // 创建 MinIO 配置
-    MinioConfig *config = minio_create();
-    if (!config)
-    {
-        fprintf(stderr, "Failed to create MinIO config\n");
-        return NULL;
-    }
-
-    // 上传文件到 MinIO
-    int result = minio_upload(config, new_name, object_name);
-    if (result != 0)
-    {
-        fprintf(stderr, "Failed to upload to MinIO: %d\n", result);
-        minio_destroy(config);
-        return NULL;
-    }
-
-    // 生成预览 URL
-    char *url = minio_preview_url(config, new_name);
-
-    minio_destroy(config);
-
-    return url;
+    return new_name;
 }
 
 

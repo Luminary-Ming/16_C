@@ -6,7 +6,7 @@
 #define PORT 9000  // 端口
 #define ACCESS_KEY "g0KyMWdYHql3VKrdWFJj"  // 访问密钥
 #define SECRET_KEY "7XWT64V22VOnRTQ2Hf0KkeoWaOWFbCFP4Itc8qUY"  // 秘密密钥
-#define BUCKET "filebucket"  // 桶名
+#define BUCKET "filebucket/address_book"  // 桶名
 
 // MinIO 服务器配置结构体
 typedef struct minio
@@ -15,7 +15,7 @@ typedef struct minio
     int port;  // 端口
     char access_key[64];  // 访问密钥
     char secret_key[64];  // 秘密密钥
-    char bucket[20];  // 桶名
+    char bucket[64];  // 桶名
 } MinioConfig;
 
 // 创建 MinIO 

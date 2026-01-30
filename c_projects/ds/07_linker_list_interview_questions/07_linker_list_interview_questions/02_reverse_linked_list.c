@@ -14,7 +14,7 @@ struct llist_node
 struct llist_node *func(struct llist_node *l)
 {
 	struct llist_node *cur = l;  // cur 指向要反转的节点
-	struct llist_node *cur_prev = NULL;  // cur_prev 指向 cur 的前一个节点
+	struct llist_node *+ = NULL;  // cur_prev 指向 cur 的前一个节点
 	struct llist_node *cur_next = NULL;  // cur_next 指向 cur 的下一个节点
 
 	while (cur != NULL)  // 遍历所有节点

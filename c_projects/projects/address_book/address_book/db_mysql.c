@@ -10,7 +10,7 @@ MYSQL *db_conn = NULL;  // 数据库连接池
 
 int db_init()
 {
-    // 初始化MySQL库（添加这一行）
+    // 初始化 MySQL 库
     if (mysql_library_init(0, NULL, NULL))
     {
         fprintf(stderr, "mysql_library_init failed\n");

@@ -30,7 +30,7 @@ char *json_response_to_string(JsonResponse *resp);  // JSON 响应转字符串
 char *contacts_to_json(Contact **contacts, int count);  // 单个联系人转 JSON
 char *contact_to_json(Contact *contact);  // 联系人列表转JSON
 
-char *upload_image(const char *object_name);  // 上传图片, 返回 URL
+char *handle_filename(const char *object_name);  // 处理上传图片名
 
 
 // 在 utils.h 的末尾添加
