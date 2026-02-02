@@ -9,10 +9,6 @@
 #include "contact.h"
 #include "minio_server.h"
 
-#include <time.h>        // 用于 time() 函数
-#include <sys/time.h>    // 用于 gettimeofday() 函数
-#include <stdint.h>      // 用于 uint32_t 类型
-
 // 全局链表
 void *global_contact_list = NULL;
 
@@ -121,6 +117,9 @@ static int handle_get_contacts(struct MHD_Connection *connection)
             contacts[actual_count++] = contact;
         }
     }
+
+    // 验证实际计数
+    printf("数据库总数: %d, 有效联系人: %d\n", count, actual_count);
 
     char *data_json = contacts_to_json(contacts, actual_count);
     free(contacts);
@@ -446,7 +445,7 @@ static int parse_id_from_url(const char *url)
 }
 
 
-// 处理Base64图片上传
+// 处理Base64图片上传       Multipart/form-data
 static int handle_upload_base64_image(struct MHD_Connection *connection,
     const char *json_data,
     size_t data_size,
@@ -472,7 +471,7 @@ static int handle_upload_base64_image(struct MHD_Connection *connection,
 
     //printf("收到JSON数据: %s\n", json_str); // 打印 json
 
-    // 简单解析JSON（实际应该用cJSON库）
+    // 简单解析JSON（实际应该用cJSON库） ,
     char *filename = NULL;
     char *base64_data = NULL;
 
@@ -650,7 +649,7 @@ int handle_request(void *cls, struct MHD_Connection *connection,
             if (content_type && strstr(content_type, "application/json"))
             {
                 // Base64 JSON上传
-                static char json_data[10 * 1024 * 1024]; // 100MB
+                static char json_data[10 * 1024 * 1024]; // 10MB
                 if (*con_cls == NULL)
                 {
                     *con_cls = json_data;
@@ -804,7 +803,7 @@ int http_server_start(int port)
     // 启动HTTP服务器
     server.daemon = MHD_start_daemon(
         MHD_USE_SELECT_INTERNALLY, port, NULL, NULL,
-        &handle_request, NULL,
+        (MHD_AccessHandlerCallback)&handle_request, NULL,
         MHD_OPTION_END);
 
     if (!server.daemon)

@@ -36,10 +36,22 @@ char *json_response_to_string(JsonResponse *resp)
 {
     if (!resp) return NULL;
 
-    char *json = malloc(5000);  // 分配足够空间
+    // 计算所需空间 ( 计算格式化字符串所需缓冲区大小)
+    // 当第一个参数是 NULL，第二个参数是 0 时
+    // snprintf 不实际写入任何内容
+    // 但它仍然计算格式化后的字符串长度
+    // 返回的是理论上需要的缓冲区大小
+    size_t needed = snprintf(NULL, 0,
+        "{\"code\":%d,\"message\":\"%s\",\"data\":%s}",
+        resp->code, resp->message,
+        resp->data[0] ? resp->data : "null");
+
+    needed += 10;  // 安全边界
+
+    char *json = malloc(needed);  // 分配足够空间
     if (!json) return NULL;
 
-    snprintf(json, 5000,
+    snprintf(json, needed,
         "{\"code\": %d, \"message\": \"%s\", \"data\": %s}",
         resp->code, resp->message,
         resp->data[0] ? resp->data : "null");
@@ -52,14 +64,32 @@ char *contact_to_json(Contact *contact)
 {
     if (!contact) return NULL;
 
-    char *json = malloc(1024);
+    // 分配足够大的缓冲区
+    size_t buffer_size = 1024; // 增加缓冲区大小
+    char *json = malloc(buffer_size);
     if (!json) return NULL;
 
-    snprintf(json, 1024,
+    int len = snprintf(json, buffer_size,
         "{\"id\": %d, \"name\": \"%s\", \"telephone\": \"%s\", "
         "\"email\": \"%s\", \"initial\": \"%c\", \"image\": \"%s\", \"del\": %d}",
         contact->id, contact->name, contact->telephone,
         contact->email, contact->initial, contact->image, contact->del);
+
+    // 检查是否截断
+    if (len >= buffer_size)
+    {
+        // 如果缓冲区不足，重新分配更大的
+        free(json);
+        buffer_size = len + 1;
+        json = malloc(buffer_size);
+        if (!json) return NULL;
+
+        snprintf(json, buffer_size,
+            "{\"id\": %d, \"name\": \"%s\", \"telephone\": \"%s\", "
+            "\"email\": \"%s\", \"initial\": \"%c\", \"image\": \"%s\", \"del\": %d}",
+            contact->id, contact->name, contact->telephone,
+            contact->email, contact->initial, contact->image, contact->del);
+    }
 
     return json;
 }
@@ -70,41 +100,66 @@ char *contacts_to_json(Contact **contacts, int count)
     if (!contacts || count <= 0)
     {
         char *empty = malloc(3);
-        if (empty) strcpy(empty, "[]");
+        if (empty)
+            strcpy(empty, "[]");
         return empty;
     }
 
+
+    // 为每个联系人预先计算JSON字符串
+    char **contact_jsons = malloc(count * sizeof(char *));
+    if (!contact_jsons) return NULL;
+
     // 计算所需空间
     size_t total_size = 3;  // "[]"
+    int valid_count = 0;    // 实际有效的联系人数量
     for (int i = 0; i < count; i++)
     {
         if (contacts[i])
         {
-            // 估计每个联系人JSON的大小
-            total_size += 300;
-        }
-    }
-
-    char *json = malloc(total_size);
-    if (!json) return NULL;
-
-    strcpy(json, "[");
-
-    for (int i = 0; i < count; i++)
-    {
-        if (contacts[i])
-        {
-            char *contact_json = contact_to_json(contacts[i]);
-            if (contact_json)
+            contact_jsons[valid_count] = contact_to_json(contacts[i]);
+            if (contact_jsons[valid_count])
             {
-                if (i > 0) strcat(json, ",");
-                strcat(json, contact_json);
-                free(contact_json);
+                total_size += strlen(contact_jsons[valid_count]) + 1; // +1 逗号
+                valid_count++;
             }
         }
     }
 
+    if (valid_count == 0)
+    {
+        free(contact_jsons);
+        char *empty = malloc(3);
+        if (empty) strcpy(empty, "[]");
+        return empty;
+    }
+
+    char *json = malloc(total_size);  // 分配足够的内存
+    if (!json)
+    {
+        for (int i = 0; i < valid_count; i++)
+        {
+            free(contact_jsons[i]);
+        }
+        free(contact_jsons);
+        return NULL;
+    }
+
+    strcpy(json, "[");
+
+    for (int i = 0; i < valid_count; i++)
+    {
+        if (i > 0)
+        {
+            strcat(json, ",");
+        }
+        strcat(json, contact_jsons[i]);
+        free(contact_jsons[i]);  // 释放每个联系人的JSON
+    }
+
     strcat(json, "]");
+
+    free(contact_jsons);
     return json;
 }
 

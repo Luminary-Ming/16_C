@@ -20,7 +20,7 @@ typedef struct
 { 
 	int code;  // 响应状态码
 	char message[100];  // 响应消息
-	char data[4096];  // 响应数据
+	char data[10240];  // 响应数据
 }JsonResponse;
 
 void json_response_init(JsonResponse *resp, int code, const char *message);  // 初始化 JSON 响应

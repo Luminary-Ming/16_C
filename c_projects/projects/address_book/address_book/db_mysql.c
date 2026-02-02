@@ -25,7 +25,7 @@ int db_init()
         return 0;
     }
 
-    // 设置连接选项（可选）
+    // 设置连接选项
     mysql_options(db_conn, MYSQL_SET_CHARSET_NAME, "utf8mb4");
 
     // 连接数据库

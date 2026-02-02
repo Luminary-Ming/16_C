@@ -1,7 +1,7 @@
 #ifndef __CONTACT_H
 #define __CONTACT_H
 
-#define NAMESIZE 20
+#define NAMESIZE 80
 #define TELEPHONESIZE 12
 #define EMAILSIZE 50
 #define IMAGESIZE 256

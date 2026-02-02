@@ -15,7 +15,7 @@ typedef struct
 int http_server_start(int port);
 void http_server_stop();
 
-// 回调函数声明
+// 主请求处理函数
 int handle_request(void *cls, struct MHD_Connection *connection,
     const char *url, const char *method,
     const char *version, const char *upload_data,
