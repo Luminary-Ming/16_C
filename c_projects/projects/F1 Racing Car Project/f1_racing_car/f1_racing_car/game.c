@@ -7,16 +7,16 @@
 #include <SDL2/SDL_ttf.h>  // sudo apt install libsdl2-ttf-dev -y
 
 // 游戏配置
-#define WINDOW_W 500
-#define WINDOW_H 800
-#define CAR_WIDTH 70
-#define CAR_HEIGHT 130
-#define MAPS_COUNT 5
-#define CARS_COUNT 9
-#define ENEMY_CARS_COUNT 9
-#define MAX_ENEMIES 5
-#define LIVES 5
-#define BASE_CAR_SPEED 5
+#define WINDOW_W 500  // 窗口宽
+#define WINDOW_H 800  // 窗口高
+#define CAR_WIDTH 70  // 赛车宽
+#define CAR_HEIGHT 130  // 赛车高
+#define MAPS_COUNT 5  // 地图数量
+#define CARS_COUNT 9  // 赛车皮肤数量
+#define ENEMY_CARS_COUNT 9  // 敌方赛车皮肤数量
+#define MAX_ENEMIES 5  // 敌方赛车最大数量, 最多同时存在MAX_ENEMIES辆
+#define LIVES 5  // 生命值
+#define BASE_CAR_SPEED 5  // 初始速度
 
 // 游戏音乐库
 static const char *bgms[] = {
@@ -31,101 +31,101 @@ static int bgm_total = sizeof(bgms) / sizeof(bgms[0]);  // bgm 数量
 // 过场动画状态
 typedef enum
 {
-    TRANSITION_NONE,
-    TRANSITION_FADE_OUT,
-    TRANSITION_FADE_IN
+    TRANSITION_NONE,  // 没有过场动画，正常游戏状态
+    TRANSITION_FADE_OUT,  // 淡出状态：屏幕逐渐变白/显示过场图片
+    TRANSITION_FADE_IN  // 淡入状态：逐渐恢复游戏画面
 } TransitionState;
 
 // 过场动画结构体
 typedef struct
 {
-    TransitionState state;
-    float alpha;        // 透明度 0.0-1.0
-    float speed;        // 过渡速度
-    int duration;       // 持续时间（帧）
-    int timer;          // 计时器
-    SDL_Texture *transition_texture; // 过场纹理
+    TransitionState state;  // 当前过场动画状态
+    float alpha;  // 透明度 0.0-1.0
+    float speed;  // 过渡速度
+    int duration;  // 持续时间（帧）
+    int timer;  // 计时器
+    SDL_Texture *transition_texture;  // 过场纹理
 } Transition;
 
 // 敌方车辆结构体
 typedef struct
 {
-    int x;           // x坐标
-    float y;         // y坐标（使用浮点数实现平滑移动）
-    int width;       // 宽度
-    int height;      // 高度
-    float speed;     // 速度
-    int active;      // 是否运动
-    int type;        // 车辆类型
-    SDL_Texture *texture; // 纹理
+    int x;   // x坐标
+    float y;  // y坐标（使用浮点数实现平滑移动）
+    int width;  // 宽度
+    int height;  // 高度
+    float speed; // 速度（像素/帧）
+    int active;  // 是否运动（1=活动状态，0=非活动状态）
+    int type;  // 车辆类型
+    SDL_Texture *texture;  // 纹理指针，指向车辆图片资源
 } EnemyCar;
 
 // 全局变量
-static SDL_Window *gameWindow = NULL;
-static SDL_Renderer *gameRenderer = NULL;
-static int gameRunning = 1;
-static float enemy_scroll_factor = 0.0f;  // 敌方车辆滚动因子
-static TTF_Font *speed_font = NULL;
+static SDL_Window *gameWindow = NULL;  // 游戏窗口指针
+static SDL_Renderer *gameRenderer = NULL;  // 游戏渲染器指针
+static int gameRunning = 1;  // 游戏运行标志（1=运行中，0=结束）
+static float enemy_scroll_factor = 0.0f;  // 敌方车辆滚动因子，用于调整敌人速度随地图滚动变化
+static TTF_Font *speed_font = NULL;  // 字体指针，用于显示速度倍率文字
 
 // 游戏资源
-static Mix_Music *bgm = NULL;
-static SDL_Texture *map_textures[MAPS_COUNT] = { NULL };
-static SDL_Texture *car_textures[CARS_COUNT] = { NULL };
-static SDL_Texture *enemy_textures[ENEMY_CARS_COUNT] = { NULL };
-static SDL_Texture *current_map_texture = NULL;
-static SDL_Texture *current_car_texture = NULL;
-static SDL_Texture *game_over_texture = NULL;
-static SDL_Texture *explosion_texture = NULL;
-static SDL_Texture *number_textures[10] = { NULL };
-static SDL_Texture *buffer_texture = NULL;
+static Mix_Music *bgm = NULL;  // 背景音乐指针
+static SDL_Texture *map_textures[MAPS_COUNT] = { NULL };  // 地图纹理数组，存储所有地图图片
+static SDL_Texture *car_textures[CARS_COUNT] = { NULL };  // 玩家车辆纹理数组
+static SDL_Texture *enemy_textures[ENEMY_CARS_COUNT] = { NULL };  // 敌方车辆纹理数组
+static SDL_Texture *current_map_texture = NULL;  // 当前使用的地图纹理
+static SDL_Texture *current_car_texture = NULL;  // 当前使用的玩家车辆纹理
+static SDL_Texture *game_over_texture = NULL;  // 游戏结束画面纹理
+static SDL_Texture *explosion_texture = NULL;  // 爆炸特效纹理
+static SDL_Texture *number_textures[10] = { NULL };  // 数字纹理数组（0-9），用于显示分数
+static SDL_Texture *buffer_texture = NULL;  // 双缓冲纹理，用于平滑渲染
 
 // 敌方车辆数组
 static EnemyCar enemies[MAX_ENEMIES];
 
 // 游戏状态
-static int car_x;
-static int car_y;
-static int current_car_speed;
-static float scroll_position;
-static int scroll_speed;
-static Transition map_transition;
-static int pending_map_change = -1;
+static int car_x;  // 玩家车辆x坐标
+static int car_y;  // 玩家车辆y坐标（固定位置）
+static int current_car_speed;  // 当前玩家车辆速度（像素/帧）
+static float scroll_position;  // 地图滚动位置，控制地图显示的偏移量
+static int scroll_speed;  // 地图滚动速度
+static Transition map_transition;  // 地图切换的过场动画对象
+static int pending_map_change = -1;  // 待切换的地图索引（-1表示没有待切换的地图） 
 
-static int score = 0;
-static int lives = LIVES;
-static int game_over = 0;
-static int enemy_spawn_timer = 0;
-static int enemy_spawn_delay = 60;
+static int score = 0;  // 当前游戏分数
+static int lives = LIVES;  // 当前生命值
+static int game_over = 0;  // 游戏结束标志（1=游戏结束，0=游戏进行中）
+static int enemy_spawn_timer = 0;  // 敌方车辆生成计时器（帧数）
+static int enemy_spawn_delay = 60; // 敌方车辆生成间隔（帧数）
 
 // 爆炸特效相关
-static float explosion_alpha = 0.0f;
-static int explosion_duration = 0;
-static int explosion_x = 0;
-static int explosion_y = 0;
+static float explosion_alpha = 0.0f;  // 爆炸特效透明度
+static int explosion_duration = 0;  // 爆炸特效持续时间（帧数）
+static int explosion_x = 0;  // 爆炸特效x坐标
+static int explosion_y = 0;  // 爆炸特效y坐标
 
 // 当前选择
-static int current_map = 0;
-static int current_car = 0;
-static int current_bgm = 0;
+static int current_map = 0;  // 当前选择的地图索引（0-MAPS_COUNT-1）
+static int current_car = 0;  // 当前选择的玩家车辆索引（0-CARS_COUNT-1）
+static int current_bgm = 0;  // 当前播放的背景音乐索引
 
 // 函数声明
-static void init_game(void);
-static void cleanup_game(void);
-static SDL_Texture *load_transition_texture(const char *path);
-static void init_transition(void);
-static void start_transition(void);
-static int update_transition(void);
-static void render_transition(void);
-static float get_speed_multiplier(int score);
-static void handle_events(void);
-static void update_game(void);
-static void render_game(void);
-static void load_game_resources(void);
-static void cleanup_game_resources(void);
-static void spawn_enemy(void);
-static void update_enemies(void);
-static void check_collisions(void);
-static void render_ui(void);
+static void init_game(void);  // 初始化游戏
+static void cleanup_game(void);  // 清理游戏资源
+static SDL_Texture *load_transition_texture(const char *path);  // 加载过场动画纹理
+static void init_transition(void);  // 初始化过场动画
+static void start_transition(void);  // 开始过场动画
+static int update_transition(void);  // 更新过场动画状态
+static void render_transition(void);  // 渲染过场动画
+static float get_speed_multiplier(int score);  // 根据分数计算速度倍率
+static void handle_events(void);  // 处理输入事件
+static void update_game(void);  // 更新游戏逻辑
+static void render_game(void);  // 渲染游戏画面
+static void load_game_resources(void);  // 加载游戏资源
+static void cleanup_game_resources(void);  // 清理游戏资源
+static void spawn_enemy(void);   // 生成新的敌方车辆
+static void update_enemies(void);   // 更新所有敌方车辆状态
+static void check_collisions(void);  // 检测碰撞
+static void render_ui(void);   // 渲染用户界面（分数、血条等）
 
 // 加载过场图片
 static SDL_Texture *load_transition_texture(const char *path)

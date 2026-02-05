@@ -5,20 +5,20 @@
 #include <math.h>
 
 // 全局变量
-static SDL_Window *homeWindow = NULL;
-static SDL_Renderer *homeRenderer = NULL;
-static SDL_Texture *bgTexture = NULL;
-static SDL_Texture *titleTexture = NULL;
-static Button buttons[4];
-static int buttonCount = 0;
-static int selectedButton = 0;
+static SDL_Window *homeWindow = NULL;  // 主页窗口指针，指向主页的SDL窗口对象，NULL表示未创建
+static SDL_Renderer *homeRenderer = NULL;  // 主页渲染器指针，用于在主页窗口上绘制图形和纹理
+static SDL_Texture *bgTexture = NULL;  // 背景纹理指针，存储主页背景图片的纹理资源
+static SDL_Texture *titleTexture = NULL;  // 标题纹理指针，存储主页标题图片（如"car.png"）的纹理资源
+static Button buttons[4];  // 按钮数组，存储主页上的所有按钮对象，大小为4对应4个功能按钮
+static int buttonCount = 0;  // 按钮数量计数器，记录当前实际创建的按钮数量（通常为4）
+static int selectedButton = 0;  // 选中的按钮ID，0表示未选中，1-4对应BUTTON_START_GAME等按钮常量
 
 // 缩放动画相关
-static float titleScale = 0.3f;
-static float scaleDir = 0.002f;
+static float titleScale = 0.3f;  // 标题当前缩放比例，初始为30%大小
+static float scaleDir = 0.002f;  // 缩放方向增量，正数表示放大，负数表示缩小
 
 // 主页 bgm
-static Mix_Music *home_bgm = NULL;
+static Mix_Music *home_bgm = NULL;  // 主页背景音乐指针
 static const char *home_bgm_path = "assets/bgm/本兮,阿悄 - 无限速.mp3";
 
 // 主页 bgm 函数
