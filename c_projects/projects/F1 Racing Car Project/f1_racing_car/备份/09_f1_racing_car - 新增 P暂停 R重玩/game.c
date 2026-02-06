@@ -15,7 +15,7 @@
 #define CARS_COUNT 9  // 赛车皮肤数量
 #define ENEMY_CARS_COUNT 9  // 敌方赛车皮肤数量
 #define MAX_ENEMIES 5  // 敌方赛车最大数量, 最多同时存在MAX_ENEMIES辆
-#define LIVES 10  // 生命值
+#define LIVES 5  // 生命值
 #define BASE_CAR_SPEED 5  // 初始速度
 
 // 游戏状态相关
@@ -431,23 +431,13 @@ static void load_game_resources(void)
     );
 
     // 游戏音乐
-   /* const char *bgms[] = {
+    const char *bgms[] = {
         "assets/bgm/Insomnia - Craig David.mp3",
         "assets/bgm/Lady Gaga - Poker Face.mp3",
         "assets/bgm/right now-akon.mp3",
         "assets/bgm/本兮,阿悄 - 无限速.mp3",
         "assets/bgm/死一样痛过(MC梦版)-MC몽.mp3"
-    };*/
-
-    if (bgm_total > 0)
-    {
-        bgm = Mix_LoadMUS(bgms[current_bgm % bgm_total]);
-        if (bgm)
-        {
-            Mix_PlayMusic(bgm, -1);
-            Mix_VolumeMusic(128);
-        }
-    }
+    };
 
     int bgm_count = sizeof(bgms) / sizeof(bgms[0]);
     if (bgm_count > 0)
@@ -920,63 +910,55 @@ static void handle_events(void)
                 // N键切换下一首音乐
                 else if (event.key.keysym.sym == SDLK_n)
                 {
-                    if (bgm_total > 0 && bgm)
+                    const char *bgms[] = {
+                        "assets/bgm/Insomnia - Craig David.mp3",
+                        "assets/bgm/Lady Gaga - Poker Face.mp3",
+                        "assets/bgm/right now-akon.mp3",
+                        "assets/bgm/本兮,阿俏 - 无限速.mp3",
+                        "assets/bgm/死一样痛过(MC梦版)-MC몽.mp3"
+                    };
+                    int bgm_count = sizeof(bgms) / sizeof(bgms[0]);
+
+                    if (bgm_count > 0 && bgm)
                     {
                         Mix_HaltMusic();
                         Mix_FreeMusic(bgm);
 
-                        current_bgm = (current_bgm + 1) % bgm_total;
+                        current_bgm = (current_bgm + 1) % bgm_count;
                         bgm = Mix_LoadMUS(bgms[current_bgm]);
-                        if (bgm)
+                        if (bgm && Mix_PlayMusic(bgm, -1) == 0)
                         {
-                            if (Mix_PlayMusic(bgm, -1) == 0)
-                            {
-                                Mix_VolumeMusic(128);
-                                printf("切换到下一首音乐: %s\n", bgms[current_bgm]);
-                            }
-                            else
-                            {
-                                printf("播放音乐失败: %s\n", Mix_GetError());
-                            }
+                            Mix_VolumeMusic(128);
+                            printf("切换到下一首音乐: %d\n", current_bgm + 1);
                         }
                     }
                 }
                 // B键切换上一首音乐
                 else if (event.key.keysym.sym == SDLK_b)
                 {
-                    if (bgm_total > 0 && bgm)
+                    const char *bgms[] = {
+                        "assets/bgm/Insomnia - Craig David.mp3",
+                        "assets/bgm/Lady Gaga - Poker Face.mp3",
+                        "assets/bgm/right now-akon.mp3",
+                        "assets/bgm/本兮,阿俏 - 无限速.mp3",
+                        "assets/bgm/死一样痛过(MC梦版)-MC몽.mp3"
+                    };
+                    int bgm_count = sizeof(bgms) / sizeof(bgms[0]);
+
+                    if (bgm_count > 0 && bgm)
                     {
                         Mix_HaltMusic();
                         Mix_FreeMusic(bgm);
 
-                        current_bgm = (current_bgm - 1 + bgm_total) % bgm_total;
+                        current_bgm = (current_bgm - 1 + bgm_count) % bgm_count;
                         bgm = Mix_LoadMUS(bgms[current_bgm]);
-                        if (bgm)
+                        if (bgm && Mix_PlayMusic(bgm, -1) == 0)
                         {
-                            if (Mix_PlayMusic(bgm, -1) == 0)
-                            {
-                                Mix_VolumeMusic(128);
-                                printf("切换到上一首音乐: %s\n", bgms[current_bgm]);
-                            }
-                            else
-                            {
-                                printf("播放音乐失败: %s\n", Mix_GetError());
-                            }
-                        }
-                        else
-                        {
-                            printf("加载音乐失败: %s\n", Mix_GetError());
-                            // 尝试加载前一首
-                            current_bgm = (current_bgm - 1 + bgm_total) % bgm_total;
-                            bgm = Mix_LoadMUS(bgms[current_bgm]);
-                            if (bgm && Mix_PlayMusic(bgm, -1) == 0)
-                            {
-                                Mix_VolumeMusic(128);
-                            }
+                            Mix_VolumeMusic(128);
+                            printf("切换到上一首音乐: %d\n", current_bgm + 1);
                         }
                     }
                 }
-
             }
         }
     }
