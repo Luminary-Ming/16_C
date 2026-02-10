@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <unistd.h>     // man 2 read
 #include <linux/input.h>   // struct input_event 结构体
+#include <termios.h>
 
 int main(void)
 {
@@ -25,24 +26,40 @@ int main(void)
 		return -1;
 	}
 
+	// 终端配置结构体
+	struct termios old, new;  // old 存储原有的配置, new 存储修改后的配置
+	tcgetattr(0, &old);  // 获取当前终端设置（0=stdin）
+	new = old;  // 把获取的原有配置复制给 new
+	// c_lflag 本地模式标志
+	new.c_lflag &= ~ICANON;  // 关闭规范模式
+	new.c_lflag &= ~ECHO;  // 关闭回显
+	tcsetattr(0, TCSANOW, &new);  // 应用新设置( 关闭规范模式, 关闭回显 )
+	//   TCSANOW: 立即生效
+	// TCSADRAIN: 等所有输出完成
+	// TCSAFLUSH: 清空输入输出缓冲区后生效
+
 	struct input_event ev;  // ev 存储读取键盘的数据
 	while (1)
 	{
 		read(kb_fd, &ev, sizeof(ev));  // 读取键盘设备数据
 		if (ev.type == EV_KEY)  // 判断是否按键
-			if (ev.value == SYN_REPORT)
+			// ev.value: 0=释放, 1=按下, 2=长按
+			if (ev.value == SYN_CONFIG)
 			{
 				switch (ev.code)
 				{
-					case 103: printf("前进 !"); break;
-					case 108: printf("后退 !"); break;
-					case 105: printf("左转 !"); break;
-					case 106: printf("右转 !"); break;
-					case  28: printf("开炮 !"); break;
-					case   1: printf("结束 !"); break;
+					case 103: printf("前进 !\n"); break;  // ↑
+					case 108: printf("后退 !\n"); break;  // ↓
+					case 105: printf("左转 !\n"); break;  // ←
+					case 106: printf("右转 !\n"); break;  // →
+					case  28: printf("开炮 !\n"); break;  // 回车
+					case   1: printf("结束 !\n"); goto FLAG;  // ESC
 				}
 			}
 	}
+FLAG:
+	tcsetattr(0, TCSANOW, &old);  // 恢复原始设置
+	close(kb_fd);  // 关闭文件描述符
 
-
+	return 0;
 }
