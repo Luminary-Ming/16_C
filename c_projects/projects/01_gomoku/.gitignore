@@ -1,0 +1,8 @@
+.vs
+
+01_gomoku.slnx
+
+01_gomoku/*
+!01_gomoku/*.c
+!01_gomoku/*.h
+!01_gomoku/makefile
