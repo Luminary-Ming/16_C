@@ -1,7 +1,7 @@
 # 先忽略所有文件
 *
 
-# 不忽略所有文件夹（这样Git才能进入文件夹找到.c文件）
+# 不忽略所有文件夹（这样Git才能进入文件夹）
 !*/
 
 # 不忽略.c文件
@@ -15,3 +15,8 @@
 
 # 不忽略.gitignore本身
 !.gitignore
+
+# 忽略 projects
+c_projects/projects
+
+c_projects/ds/待删除
