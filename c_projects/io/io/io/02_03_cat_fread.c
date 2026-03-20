@@ -3,6 +3,9 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>  // 使用 open 函数
+#include <sys/stat.h>  // 使用 open 函数
+#include <fcntl.h>  // 使用 open 函数
 
 #define BUFSIZE 4096
 
@@ -21,9 +24,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static int mycat(const char *pathname)
+ int mycat(const char *pathname)
 {
-    FILE *fp = fopen(pathname, "r");
+    int *fd = open(pathname, O_RDONLY);
     if (fp == NULL)
     {
         perror("fopen()");

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 static int mycat(const char *pathname);
 
 int main(int argc, char *argv[])
