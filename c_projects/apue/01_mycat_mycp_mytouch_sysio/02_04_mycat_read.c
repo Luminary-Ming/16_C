@@ -49,7 +49,7 @@ int mycat(const char *pathname)
 			close(fd);
 			return -3;
 		}
-		else if (read_size == 0)  //  如果读到的字节数为 0, 说明到达文件末尾
+		else if (read_size == 0)  // 如果读到的字节数为 0, 说明到达文件末尾
 			break;  // 读完了退出循环
 
 		// 把 buf 缓冲区中的数据写入到 stdout 中, 一次写 read_size 个数据, 每个数据占 1 字节

@@ -20,8 +20,7 @@ int main(int argc, char *argv[])
 		goto ERR_1;
 	}
 
-	if (stat(argv[1], &fs) == -1)  // 获取文件元信息
-	{
+	if (stat(argv[1], &fs) == -1)  // 获取文件元信息	{
 		perror("stat()");
 		ret = -2;
 		goto ERR_1;
