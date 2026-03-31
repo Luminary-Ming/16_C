@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	// 将命令行第二个参数 (消息正文) 复制到 str 中, 最多复制 SIR_SIZE-1 个字符
 	// 留出一个字节用于存放字符串结束符 '\0'
 	strncpy(send_buf.str, argv[2], MSG_SIZE - 1);
-	// 手动添加字符串结束符，确保 str 始终以 '\0' 结尾 (防止打印时越界)
+	// 手动添加字符串结束符, 确保 str 始终以 '\0' 结尾 (如果 src 长度大于 n, strncpy 只会复制前 n 个字符，不会在末尾添加 '\0')
 	send_buf.str[MSG_SIZE - 1] = '\0';
 	
 	// 发送消息到消息队列
