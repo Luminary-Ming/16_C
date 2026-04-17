@@ -1,3 +1,9 @@
+/*
+	多线程顺序输出字符
+	使用 5 个线程分别循环输出'a'、'b'、'c'、'd'、'e'，
+	并通过互斥锁和条件变量确保输出顺序严格为 "abcdeabcde..."
+	程序运行5秒后自动退出
+*/
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,13 +18,13 @@
 // 全局同步变量
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;  // 初始化互斥锁
 static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;  // 初始化条件变量
-int turn = 0;  // 当前应该输出的线程 ID (0 ~ 4)
+int turn = 0;  // 当前应该输出的线程编号 (0 ~ 4)
 int running = 1;  // 程序运行状态, 1=运行中; 0=结束
 
 // 线程工作函数的参数结构体
 struct thread_arg
 {
-	int tid;  // 线程 ID
+	int tid;  // 线程编号
 	char ch;  // 对应输出的英文字符
 };
 
@@ -26,7 +32,7 @@ struct thread_arg
 void *thread_job(void *arg)
 {
 	struct thread_arg *thr_arg = (struct thread_arg *)arg;
-	int tid = thr_arg->tid;  // 获取线程 ID
+	int tid = thr_arg->tid;  // 获取线程编号
 	char ch = thr_arg->ch;  // 获取对应要输出的英文字符
 	free(thr_arg);  // 释放内存
 
@@ -34,9 +40,22 @@ void *thread_job(void *arg)
 	{
 		pthread_mutex_lock(&mutex);  // 加锁
 
-		// 等待条件：当前线程的 ID 不等于 turn（未轮到自己输出），并且程序仍在运行（running == 1）
-		while (turn != tid && running == 1)
-			pthread_cond_wait(&cond, &mutex);
+		// 等待条件: 当前线程的 ID 不等于 turn (未轮到自己输出), 并且程序仍在运行 (running == 1)
+		while (tid != turn && running == 1)
+			/*
+				pthread_cond_wait 会释放锁, 允许其他线程进入临界区
+				当条件不满足时, 线程自愿放弃 CPU, 进入睡眠状态
+				被唤醒后, 它会重新获得锁, 然后再次检查条件
+			*/
+			pthread_cond_wait(&cond, &mutex);  // 等待条件变量变化的通知
+		/*
+			当线程进入 while (n != job) 循环时
+				1.它会释放互斥锁, 让其他线程得以工作
+				2.它会阻塞自己, 不占用 CPU 时间
+				3.被唤醒后会重新获得锁并再次检查条件
+				4.只有编号匹配的线程才能跳出循环执行打印
+				5.其他不匹配的线程会再次进入等待, 形成严格的顺序执行
+		*/
 
 		// 如果程序已结束, 退出循环
 		if (running == 0)
@@ -47,7 +66,7 @@ void *thread_job(void *arg)
 
 		write(STDOUT_FILENO, &ch, 1);  // 往 stdout 中写入英文字符
 
-		turn = (turn + 1) % 5;  // 更新下一个要输出字符的线程 ID
+		turn = (turn + 1) % THREAD_NUM;  // 更新下一个要输出字符的线程 ID
 
 		pthread_cond_broadcast(&cond);  // 唤醒所有等待的线程 (让下一个线程继续)
 		pthread_mutex_unlock(&mutex);  // 解锁

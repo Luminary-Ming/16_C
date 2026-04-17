@@ -38,7 +38,7 @@ static void driver(int none)
 				// 执行用户回调 (用户需确保回调是异步信号安全的)
 				timer_arr[td]->handler(timer_arr[td]->arg);
 				free(timer_arr[td]);  // 销毁闹钟
-				timer_arr[td] == NULL;  // 清空槽位
+				timer_arr[td] = NULL;  // 清空槽位
 			}
 		}
 	}

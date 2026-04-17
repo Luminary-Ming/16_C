@@ -142,7 +142,7 @@ static int mydaemon(void)
 	dup2(fd, 0);  // 将文件描述符 0 重定向到 fd 指向的 /dev/null
 	dup2(fd, 1);  // 将文件描述符 1 重定向到 fd 指向的 /dev/null
 	dup2(fd, 2);  // 将文件描述符 2 重定向到 fd 指向的 /dev/null
-	if (fd > 2)  // 关闭多余的 fd 文件描述符
+	if (fd > 2)   // 关闭多余的 fd 文件描述符
 		close(fd);
 
 	return 0;
