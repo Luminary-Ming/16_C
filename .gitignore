@@ -22,4 +22,7 @@
 # 忽略 projects
 c_projects/projects
 
+# 忽略 z_exercise
+c_projects/z_exercise
+
 c_projects/ds/待删除

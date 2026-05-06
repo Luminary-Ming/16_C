@@ -13,6 +13,11 @@ public:
 	void show();                     // 遍历可变长数组
 	void printThis();                // 打印 this 指针
 
+	// 下标运算符的重载
+	int &operator[](int i);
+	// 下标运算符的重载，常函数版本，专门给常对象使用
+	const int &operator[](int i) const;
+
 	// 增删改查
 	int insert(int value);
 	int del(int i);

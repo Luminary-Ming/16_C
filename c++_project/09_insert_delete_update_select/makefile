@@ -1,4 +1,4 @@
-arr : main.cpp arr.cpp
+arr : main.o arr.o
 	g++ -o $@ $^
 clean :
 	rm -rf arr

@@ -45,6 +45,8 @@ int main(void)
 	o.test(22);
 	o.test(22, 33.33);
 	o.test(33.33, 22);
+
+	return 0;
 }
 
 /*

@@ -87,6 +87,16 @@ void VLA::printThis()
 	cout << "this = " << this << endl;
 }
 
+int &VLA::operator[](int i)
+{
+	return m_a[i];
+}
+
+const int &VLA::operator[](int i) const
+{
+	return m_a[i];
+}
+
 // 在数组末尾插入一个新元素
 int VLA::insert(int value)
 {
